@@ -1,6 +1,8 @@
-import formidable from 'formidable';
+import {NextResponse} from "next/server";
 import fs from 'fs';
-import path from 'path';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+const pump = promisify(pipeline)
 
 export const config = {
   api: {
@@ -8,13 +10,13 @@ export const config = {
   },
 };
 
-export async function POST(req) {
+export async function POST(req,res) {
   try {
-    const form = new formidable.IncomingForm();
-    const uploadDir = path.join(process.cwd(), 'public/assets');  // Set the upload directory
-
-    form.uploadDir = uploadDir;
-    form.keepExtensions = true;
+    const formData = await req.formData();
+    const file = formData.getAll('files')[0]
+    const filePath = `./public/assets/${file.name}`;
+    await pump(file.stream(), fs.createWriteStream(filePath));
+    return NextResponse.json({status:"success",data:file.size})
 
     // Ensure the upload directory exists
     if (!fs.existsSync(uploadDir)) {
@@ -22,36 +24,8 @@ export async function POST(req) {
       console.log(`Created directory: ${uploadDir}`);
     }
 
-    return new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) {
-          console.error('Error parsing form:', err);
-          reject(new Response(JSON.stringify({ error: 'Failed to parse form data' }), { status: 500 }));
-          return;
-        }
-
-        const uploadedFile = files.file;  // Get the uploaded file
-        if (!uploadedFile) {
-          console.error('No file uploaded.');
-          reject(new Response(JSON.stringify({ error: 'No file uploaded' }), { status: 400 }));
-          return;
-        }
-
-        // Path to save the uploaded file
-        const filePath = path.join(uploadDir, uploadedFile.newFilename);
-        console.log('Saving file to:', filePath);
-
-        try {
-          fs.renameSync(uploadedFile.filepath, filePath);  // Move the file
-          resolve(new Response(JSON.stringify({ message: 'File uploaded successfully', filePath }), { status: 200 }));
-        } catch (renameError) {
-          console.error('Error saving file:', renameError);
-          reject(new Response(JSON.stringify({ error: 'Error saving file' }), { status: 500 }));
-        }
-      });
-    });
   } catch (error) {
     console.error('Unexpected server error:', error);
-    return new Response(JSON.stringify({ error: 'Unexpected server error' }), { status: 500 });
+    return  NextResponse.json({status:"fail",data:e})
   }
 }

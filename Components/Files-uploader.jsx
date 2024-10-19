@@ -1,5 +1,3 @@
-// FileUploader.jsx
-
 'use client';
 
 import React, { useState } from 'react';
@@ -23,34 +21,36 @@ export function FileUploader() {
   };
 
   // Upload the files to the server
-  const uploadFiles = async () => {
-    if (files.length === 0) return;
+  async function uploadFiles() {
+    setUploading(true);  // Set uploading state to true
 
-    const formData = new FormData();
-    files.forEach((file) => formData.append('file', file)); // Append files to FormData
+    var formData = new FormData();
+
+    // Append each selected file to FormData
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    var requestOptions = {
+      method: 'POST',
+      body: formData,
+    };
 
     try {
-      setUploading(true);  // Set uploading status
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch("/api/upload", requestOptions);
+      const result = await response.json();
+      console.log(result);
+      alert('Files uploaded successfully!')
 
-      if (response.ok) {
-        const data = await response.json();
-        alert('Files uploaded successfully!'); // Notify success
-        setFiles([]); // Clear the file list after successful upload
-      } else {
-        const data = await response.json();
-        alert(`File upload failed: ${data.error}`); // Notify error
-      }
+      // Reset state after successful upload
+      setFiles([]);
     } catch (error) {
       console.error('Error uploading files:', error);
-      alert('An error occurred during file upload.'); // Notify error
+      alert('An error occurred during file upload.',error);
     } finally {
-      setUploading(false); // Reset uploading status
+      setUploading(false);  // Set uploading state to false
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-6 px-40">
@@ -102,7 +102,7 @@ export function FileUploader() {
           <button
             onClick={uploadFiles}
             className="bg-blue-500 text-white p-2 rounded-lg"
-            disabled={uploading} // Disable while uploading
+            disabled={uploading}
           >
             {uploading ? 'Uploading...' : 'Upload Files'}
           </button>

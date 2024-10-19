@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 export default function FileList() {
   const [files, setFiles] = useState([]);
 
@@ -50,14 +51,17 @@ export default function FileList() {
   const handleLastPage = () => {
     setCurrentPage(totalPages);
   };
+  const router = useRouter();
+    const handleSubmit = () => {
+        router.push("/Files/upload");
+    };
   return (
     <div className="container mx-auto p-4">
   {/* Header section */}
   <div className="flex justify-between items-center mb-4">
-    <h1 className="text-2xl font-bold">Products (20)</h1>
-    <button 
+    <h1 className="text-2xl font-bold">Word Files (20)</h1>
+    <button  onClick={handleSubmit}
       className="bg-orange-500 text-white px-4 py-2 rounded" 
-      // Redirect to upload
     >
       + Add New
     </button>
